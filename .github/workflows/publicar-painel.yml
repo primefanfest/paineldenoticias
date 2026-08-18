@@ -1,0 +1,50 @@
+name: Publicar painel no GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preparar imagens licenciadas e identidade visual
+        run: |
+          mkdir -p public/crests/escudosweb
+          base="https://newswall-pro-marcio.metachieve.chatgpt.site"
+          curl -fsSL "$base/rio-hero.webp" -o public/rio-hero.webp
+          curl -fsSL "$base/og.png" -o public/og.png
+          curl -fsSL "$base/favicon.svg" -o public/favicon.svg
+          for time in corinthians gremio atletico-mineiro botafogo fluminense palmeiras flamengo sao-paulo vasco internacional santos bahia; do
+            curl -fsSL "$base/crests/escudosweb/$time.png" -o "public/crests/escudosweb/$time.png"
+          done
+      - run: npm install
+      - run: npm run build:pages
+        env:
+          NEXT_PUBLIC_BASE_PATH: /paineldenoticias
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
