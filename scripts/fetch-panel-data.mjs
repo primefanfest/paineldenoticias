@@ -16,6 +16,23 @@ const paginasRio = [
 ];
 const rioTermos = /\b(rio de janeiro|fluminense|carioca|niter[oó]i|baixada fluminense|maracan[aã]|copacabana|ipanema|tijuca|zona oeste|zona norte)\b/i;
 const mundoTermos = /\b(internacional|mundo|estados unidos|eua|europa|[aá]sia|[aá]frica|onu|china|r[uú]ssia|ucr[aâ]nia|israel|gaza|argentina)\b/i;
+const palavrasComuns = new Set("a o as os de da do das dos e em no na nos nas para por com um uma que ao aos à às seu sua seus suas rio janeiro".split(" "));
+const prioridadeFonte = { "O Dia": 0, "G1 Rio": 1, "Prefeitura do Rio": 2, "Agência Brasil": 3 };
+function palavrasDoTitulo(title = "") {
+  return new Set(title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((p) => p.length > 2 && !palavrasComuns.has(p)));
+}
+function mesmaNoticia(a, b) {
+  const aa = palavrasDoTitulo(a.title), bb = palavrasDoTitulo(b.title);
+  if (Math.min(aa.size, bb.size) < 3) return false;
+  const comuns = [...aa].filter((p) => bb.has(p)).length;
+  return comuns / Math.min(aa.size, bb.size) >= 0.6;
+}
+function removerDuplicadas(noticias) {
+  const ordenadas = [...noticias].sort((a, b) => (prioridadeFonte[a.source] ?? 9) - (prioridadeFonte[b.source] ?? 9) || Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const unicas = [];
+  for (const noticia of ordenadas) if (!unicas.some((existente) => mesmaNoticia(existente, noticia))) unicas.push(noticia);
+  return unicas.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+}
 
 function lerFeed(xml, source) {
   return [...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].map((r) => {
@@ -95,7 +112,7 @@ try {
   ]);
   const rss = xmls.flatMap((xml, i) => lerFeed(xml, feeds[i][1]));
   const portaisRio = paginas.flatMap((html, i) => lerPaginaNoticias(html, paginasRio[i][1], paginasRio[i][0], paginasRio[i][2]));
-  const todas = [...new Map([...rss, ...portaisRio].map((n) => [n.link, n])).values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const todas = removerDuplicadas([...new Map([...rss, ...portaisRio].map((n) => [n.link, n])).values()]);
   const rio = todas.filter((n) => ["Prefeitura do Rio", "O Dia", "G1 Rio"].includes(n.source) || rioTermos.test(`${n.title} ${n.description}`));
   const mundo = todas.filter((n) => mundoTermos.test(`${n.title} ${n.description}`) && !rioTermos.test(`${n.title} ${n.description}`));
   const geral = todas.filter((n) => !rio.includes(n) && !mundo.includes(n));
