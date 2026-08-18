@@ -10,6 +10,10 @@ const texto = (v = "") => limpar(v).replace(/<[^>]+>/g, " ").replace(/\s+/g, " "
 const resumo = (v = "") => texto(v).replace(/\s*O post .*? apareceu primeiro em .*$/i, "").replace(/\s*\[…\]\s*$/u, "…").trim();
 const tag = (item, nome) => item.match(new RegExp(`<${nome}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${nome}>`, "i"))?.[1] ?? "";
 const feeds = [["https://prefeitura.rio/feed/", "Prefeitura do Rio"], ["https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml", "Agência Brasil"], ["https://agenciabrasil.ebc.com.br/rss/internacional/feed.xml", "Agência Brasil"]];
+const paginasRio = [
+  ["https://odia.ig.com.br/rio-de-janeiro/", "O Dia", /\/rio-de-janeiro\/\d{4}\/\d{2}\//i],
+  ["https://g1.globo.com/rj/rio-de-janeiro/", "G1 Rio", /\/rj\/rio-de-janeiro\/noticia\/\d{4}\/\d{2}\//i],
+];
 const rioTermos = /\b(rio de janeiro|fluminense|carioca|niter[oó]i|baixada fluminense|maracan[aã]|copacabana|ipanema|tijuca|zona oeste|zona norte)\b/i;
 const mundoTermos = /\b(internacional|mundo|estados unidos|eua|europa|[aá]sia|[aá]frica|onu|china|r[uú]ssia|ucr[aâ]nia|israel|gaza|argentina)\b/i;
 
@@ -20,6 +24,28 @@ function lerFeed(xml, source) {
     const publicada = new Date(texto(tag(item, "pubDate")));
     return { title: texto(tag(item, "title")), description: resumo(descricao).slice(0, 220), link: texto(tag(item, "link")), publishedAt: Number.isNaN(publicada.getTime()) ? "" : publicada.toISOString(), image: texto(image), source };
   }).filter((n) => n.title && n.link && !Number.isNaN(Date.parse(n.publishedAt)));
+}
+function lerPaginaNoticias(html, source, pageUrl, linkPattern) {
+  const agora = Date.now();
+  const links = [...html.matchAll(/<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi)].map((r) => {
+    let link = limpar(r[1]);
+    try { link = new URL(link, pageUrl).href; } catch { return null; }
+    const title = texto(r[2]);
+    return linkPattern.test(link) && title.length >= 25 ? { title, link } : null;
+  }).filter(Boolean);
+  return [...new Map(links.map((n) => [n.link, n])).values()].slice(0, 12).map((n, index) => ({
+    ...n,
+    description: "",
+    publishedAt: new Date(agora - index * 60_000).toISOString(),
+    image: "",
+    source,
+  }));
+}
+async function buscarTexto(url) {
+  try {
+    const resposta = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)" } });
+    return resposta.ok ? resposta.text() : "";
+  } catch { return ""; }
 }
 
 const imagemInvalida = (url = "") => !url || /logo|favicon|avatar|agenciabrasil\.svg|\/ebc\.png(?:\?|$)/i.test(url);
@@ -63,10 +89,14 @@ async function baixarImagem(noticia) {
 }
 
 try {
-  const respostas = await Promise.all(feeds.map(([url]) => fetch(url, { headers: { "User-Agent": "NewsWall-Pro/1.0" } })));
-  const xmls = await Promise.all(respostas.map((r) => r.ok ? r.text() : ""));
-  const todas = [...new Map(xmls.flatMap((xml, i) => lerFeed(xml, feeds[i][1])).map((n) => [n.link, n])).values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
-  const rio = todas.filter((n) => n.source === "Prefeitura do Rio" || rioTermos.test(`${n.title} ${n.description}`));
+  const [xmls, paginas] = await Promise.all([
+    Promise.all(feeds.map(([url]) => buscarTexto(url))),
+    Promise.all(paginasRio.map(([url]) => buscarTexto(url))),
+  ]);
+  const rss = xmls.flatMap((xml, i) => lerFeed(xml, feeds[i][1]));
+  const portaisRio = paginas.flatMap((html, i) => lerPaginaNoticias(html, paginasRio[i][1], paginasRio[i][0], paginasRio[i][2]));
+  const todas = [...new Map([...rss, ...portaisRio].map((n) => [n.link, n])).values()].sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  const rio = todas.filter((n) => ["Prefeitura do Rio", "O Dia", "G1 Rio"].includes(n.source) || rioTermos.test(`${n.title} ${n.description}`));
   const mundo = todas.filter((n) => mundoTermos.test(`${n.title} ${n.description}`) && !rioTermos.test(`${n.title} ${n.description}`));
   const geral = todas.filter((n) => !rio.includes(n) && !mundo.includes(n));
   const hero = rio[0] ?? geral[0] ?? todas[0];
