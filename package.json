@@ -1,0 +1,11 @@
+{
+  "name": "newswall-escudos-automation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sincronizar-escudos.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.55.0"
+  }
+}
