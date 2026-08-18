@@ -5,8 +5,9 @@ const destino = new URL("../public/data/", import.meta.url);
 const destinoImagens = new URL("images/", destino);
 await mkdir(destino, { recursive: true });
 await mkdir(destinoImagens, { recursive: true });
-const limpar = (v = "") => v.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, "&");
+const limpar = (v = "") => v.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(Number.parseInt(n, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n))).replace(/&amp;/g, "&");
 const texto = (v = "") => limpar(v).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const resumo = (v = "") => texto(v).replace(/\s*O post .*? apareceu primeiro em .*$/i, "").replace(/\s*\[…\]\s*$/u, "…").trim();
 const tag = (item, nome) => item.match(new RegExp(`<${nome}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${nome}>`, "i"))?.[1] ?? "";
 const feeds = [["https://prefeitura.rio/feed/", "Prefeitura do Rio"], ["https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml", "Agência Brasil"], ["https://agenciabrasil.ebc.com.br/rss/internacional/feed.xml", "Agência Brasil"]];
 const rioTermos = /\b(rio de janeiro|fluminense|carioca|niter[oó]i|baixada fluminense|maracan[aã]|copacabana|ipanema|tijuca|zona oeste|zona norte)\b/i;
@@ -17,7 +18,7 @@ function lerFeed(xml, source) {
     const item = r[1], descricao = tag(item, "description"), conteudo = tag(item, "content:encoded");
     const image = item.match(/<(?:media:content|media:thumbnail|enclosure)[^>]+url=["']([^"']+)["']/i)?.[1] ?? limpar(conteudo).match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? limpar(descricao).match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? "";
     const publicada = new Date(texto(tag(item, "pubDate")));
-    return { title: texto(tag(item, "title")), description: texto(descricao).slice(0, 220), link: texto(tag(item, "link")), publishedAt: Number.isNaN(publicada.getTime()) ? "" : publicada.toISOString(), image: texto(image), source };
+    return { title: texto(tag(item, "title")), description: resumo(descricao).slice(0, 220), link: texto(tag(item, "link")), publishedAt: Number.isNaN(publicada.getTime()) ? "" : publicada.toISOString(), image: texto(image), source };
   }).filter((n) => n.title && n.link && !Number.isNaN(Date.parse(n.publishedAt)));
 }
 
