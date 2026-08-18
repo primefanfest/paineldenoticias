@@ -77,7 +77,7 @@ try {
 } catch (erro) { console.warn(`Notícias indisponíveis: ${erro}`); await writeFile(new URL("news.json", destino), "{}"); }
 
 const ligas = [["bra.1", "BRASILEIRÃO SÉRIE A", 0], ["bra.copa_do_brazil", "COPA DO BRASIL", 1], ["conmebol.sudamericana", "SUL-AMERICANA", 2], ["conmebol.libertadores", "LIBERTADORES", 3], ["bra.2", "BRASILEIRÃO SÉRIE B", 99]];
-const rj = /flamengo|vasco|fluminense|botafogo|volta redonda|america-rj|madureira|bangu|portuguesa-rj/i;
+const rj = /flamengo|vasco|fluminense|botafogo(?![- ]?sp)|volta redonda|america-rj|madureira|bangu|portuguesa-rj/i;
 const escudos = { palmeiras: "palmeiras", flamengo: "flamengo", corinthians: "corinthians", "sao paulo": "sao-paulo", botafogo: "botafogo", fluminense: "fluminense", gremio: "gremio", vasco: "vasco", "vasco da gama": "vasco", "atletico mineiro": "atletico-mineiro", bahia: "bahia", internacional: "internacional", santos: "santos", "athletico paranaense": "athletico-paranaense", "athletico-pr": "athletico-paranaense", chapecoense: "chapecoense", coritiba: "coritiba", cruzeiro: "cruzeiro", mirassol: "mirassol", "mirassol-sp": "mirassol", "red bull bragantino": "red-bull-bragantino", bragantino: "red-bull-bragantino", remo: "remo", vitoria: "vitoria", "vitoria-ba": "vitoria" };
 const normalizar = (nome) => nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const logo = (nome) => escudos[normalizar(nome)] ? `/paineldenoticias/crests/escudosweb/${escudos[normalizar(nome)]}.png` : "";
@@ -86,10 +86,22 @@ try {
   const inicio = new Date(); inicio.setDate(inicio.getDate() - 1); const fim = new Date(); fim.setDate(fim.getDate() + 21); const periodo = `${chave(inicio)}-${chave(fim)}`;
   const respostas = await Promise.all(ligas.map(([slug]) => fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${periodo}&limit=100`)));
   const dados = await Promise.all(respostas.map((r) => r.ok ? r.json() : { events: [] })); const limite = Date.now() - 4 * 60 * 60 * 1000;
-  const matches = dados.flatMap((d, i) => (d.events ?? []).map((evento) => {
+  const todosOsJogos = dados.flatMap((d, i) => (d.events ?? []).map((evento) => {
     const times = evento.competitions?.[0]?.competitors ?? [], casa = times.find((t) => t.homeAway === "home")?.team ?? {}, fora = times.find((t) => t.homeAway === "away")?.team ?? {};
     const home = casa.displayName ?? "A definir", away = fora.displayName ?? "A definir";
     return { id: evento.id, competition: ligas[i][1], competitionPriority: ligas[i][2], home, homeCode: casa.abbreviation ?? home.slice(0, 3).toUpperCase(), homeLogo: logo(home), away, awayCode: fora.abbreviation ?? away.slice(0, 3).toUpperCase(), awayLogo: logo(away), dateTime: evento.date, state: evento.status?.type?.state ?? "pre", rjPriority: rj.test(`${home} ${away}`) ? 0 : 1 };
-  })).filter((j) => j.dateTime && Date.parse(j.dateTime) >= limite).sort((a, b) => a.rjPriority - b.rjPriority || a.competitionPriority - b.competitionPriority || Date.parse(a.dateTime) - Date.parse(b.dateTime)).slice(0, 4);
+  })).filter((j) => j.dateTime && Date.parse(j.dateTime) >= limite);
+  const ordenarJogos = (a, b) => a.rjPriority - b.rjPriority || Date.parse(a.dateTime) - Date.parse(b.dateTime);
+  const ateSeteDias = Date.now() + 7 * 24 * 60 * 60 * 1000;
+  const destaquesPorCampeonato = ligas
+    .filter(([, , prioridade]) => prioridade < 99)
+    .sort((a, b) => a[2] - b[2])
+    .map(([, nome]) => todosOsJogos.filter((j) => j.competition === nome && Date.parse(j.dateTime) <= ateSeteDias).sort(ordenarJogos)[0])
+    .filter(Boolean);
+  const idsEscolhidos = new Set(destaquesPorCampeonato.map((j) => j.id));
+  const complementares = todosOsJogos
+    .filter((j) => !idsEscolhidos.has(j.id))
+    .sort((a, b) => a.rjPriority - b.rjPriority || Number(a.competitionPriority === 99) - Number(b.competitionPriority === 99) || Date.parse(a.dateTime) - Date.parse(b.dateTime) || a.competitionPriority - b.competitionPriority);
+  const matches = [...destaquesPorCampeonato, ...complementares].slice(0, 4);
   await writeFile(new URL("football.json", destino), JSON.stringify({ matches, updatedAt: new Date().toISOString(), source: "ESPN", crestSource: "EscudosWeb" }));
 } catch (erro) { console.warn(`Agenda indisponível: ${erro}`); await writeFile(new URL("football.json", destino), "{}"); }
