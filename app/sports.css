@@ -1,0 +1,24 @@
+.broadcast-sidebar { position: relative; grid-template-rows: minmax(0, 1fr); padding-top: clamp(18px, 2.2vh, 24px); }
+.sidebar-tabs { position: absolute; z-index: 4; top: 0; right: 0; display: flex; gap: 5px; }
+.sidebar-tabs span { width: 7px; height: 4px; overflow: hidden; border-radius: 3px; color: transparent; background: #39414b; transition: width .3s, background .3s; }
+.sidebar-tabs span.active { width: 28px; background: var(--broadcast-red); }
+.news-mode { min-height: 0; display: grid; grid-template-rows: 1fr 1fr; gap: clamp(10px, 1.5vh, 17px); animation: sidebar-in .5s ease both; }
+.football-panel { min-height: 0; height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; animation: sidebar-in .5s ease both; }
+.football-heading { display: flex; align-items: end; justify-content: space-between; padding: 0 2px 10px; border-bottom: 2px solid var(--broadcast-red); }
+.football-heading span { color: var(--broadcast-red); font-size: clamp(9px, .7vw, 12px); font-weight: 900; letter-spacing: 1.2px; }
+.football-heading h2 { margin: 2px 0 0; font-size: clamp(19px, 1.65vw, 30px); letter-spacing: -.7px; }
+.football-heading small { margin-bottom: 4px; color: #8e98a3; font-size: clamp(8px, .65vw, 11px); font-weight: 900; letter-spacing: 1px; }
+.match-list { min-height: 0; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: clamp(7px, 1vh, 11px); padding: clamp(8px, 1.2vh, 13px) 0; }
+.match-card { min-height: 0; overflow: hidden; border: 1px solid #202a34; border-radius: 11px; background: linear-gradient(105deg, #131c25, #091017); box-shadow: 0 10px 22px #0004; }
+.match-competition { padding: 5px 10px 4px; color: #aeb6bf; border-bottom: 1px solid #202932; font-size: clamp(8px, .62vw, 11px); font-weight: 900; letter-spacing: .8px; }
+.match-body { height: calc(100% - 24px); display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; padding: 6px 10px; }
+.match-team { min-width: 0; display: flex; align-items: center; gap: 8px; }.match-team strong { overflow: hidden; font-size: clamp(10px, .84vw, 15px); white-space: nowrap; text-overflow: ellipsis; }.away-team { flex-direction: row-reverse; text-align: right; }
+.team-mark { position: relative; flex: 0 0 auto; width: clamp(30px, 2.6vw, 46px); aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; border: 2px solid #ffffff2c; background: linear-gradient(145deg, #263849, #101820) !important; color: #d7dce1 !important; font-size: clamp(7px, .6vw, 11px); box-shadow: 0 4px 12px #0007; }
+.team-mark.has-logo { border: 0; border-radius: 0; background: transparent !important; box-shadow: none; }
+.team-mark.has-logo > span { visibility: hidden; }
+.team-mark img { position: absolute; inset: -3px; width: calc(100% + 6px); height: calc(100% + 6px); object-fit: contain; filter: drop-shadow(0 3px 5px #000b); }
+.team-mark.flamengo { background: linear-gradient(#d3182b 0 48%, #111 49% 66%, #d3182b 67%); }.team-mark.vasco { background: linear-gradient(135deg, #fafafa 0 42%, #111 43% 57%, #fafafa 58%); color: #c41020; }.team-mark.fluminense { background: linear-gradient(110deg, #7c1735 0 40%, #fff 41% 46%, #0b6a42 47%); }.team-mark.volta { background: linear-gradient(135deg, #f6d31d 0 48%, #171717 49%); color: #151515; }.team-mark.opponent { background: linear-gradient(145deg, #263849, #101820); color: #d7dce1; }
+.match-time { min-width: clamp(55px, 4.5vw, 78px); text-align: center; }.match-time small { display: block; color: #858f9a; font-size: clamp(7px, .56vw, 10px); font-weight: 800; }.match-time b { display: block; margin-top: 3px; color: #fff; font-size: clamp(15px, 1.2vw, 22px); font-variant-numeric: tabular-nums; }
+.football-note { text-align: right; color: #6f7984; font-size: clamp(7px, .6vw, 10px); letter-spacing: .5px; }
+@keyframes sidebar-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+@media (orientation: landscape) and (max-height: 760px) { .broadcast-sidebar { padding-top: 13px; }.football-heading { padding-bottom: 6px; }.match-list { padding: 6px 0; gap: 6px; }.match-competition { padding-top: 3px; padding-bottom: 3px; }.match-body { height: calc(100% - 20px); padding-top: 3px; padding-bottom: 3px; } }
