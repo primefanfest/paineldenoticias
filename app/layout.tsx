@@ -10,8 +10,8 @@ import "./dollar.css";
 export const metadata: Metadata = {
   title: "NewsWall Pro — Central de Notícias",
   description: "Painel de notícias em tempo real para TV e digital signage.",
-  openGraph: { title: "NewsWall Pro", description: "Central de notícias para TV.", images: ["https://primefanfest.github.io/paineldenoticias/og.png"] },
-  twitter: { card: "summary_large_image", title: "NewsWall Pro", description: "Central de notícias para TV.", images: ["https://primefanfest.github.io/paineldenoticias/og.png"] },
+  openGraph: { title: "NewsWall Pro", description: "Central de notícias para TV." },
+  twitter: { card: "summary_large_image", title: "NewsWall Pro", description: "Central de notícias para TV." },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
