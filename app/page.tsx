@@ -26,7 +26,7 @@ const fallbackMatches = [
 
 type WeatherDay = { label: string; icon: string; condition: string; max: number; min: number; current?: number };
 type DollarQuote = { value: number; variation: number; updated: string };
-type NewsStory = { title: string; description?: string; age?: string; image?: string; publishedAt?: string; source?: string; link?: string };
+type NewsStory = { title: string; description?: string; age?: string; image?: string; imageFallback?: boolean; publishedAt?: string; source?: string; link?: string };
 type FootballMatch = { id?: string; competition: string; home: string; homeCode: string; homeLogo?: string; away: string; awayCode: string; awayLogo?: string; date?: string; time?: string; dateTime?: string; state?: string; tone?: string };
 
 const fallbackWeather: WeatherDay[] = [
@@ -134,11 +134,11 @@ export default function Home() {
     if (!hero.image) { setHeroImage(asset("/rio-hero.webp")); setHeroImageIsFallback(true); return; }
     const resolvedImage = hero.image.startsWith("http") || hero.image.startsWith(BASE_PATH) ? hero.image : asset(hero.image);
     const candidate = new Image();
-    candidate.onload = () => { setHeroImage(resolvedImage); setHeroImageIsFallback(false); };
+    candidate.onload = () => { setHeroImage(resolvedImage); setHeroImageIsFallback(Boolean(hero.imageFallback)); };
     candidate.onerror = () => { setHeroImage(asset("/rio-hero.webp")); setHeroImageIsFallback(true); };
     candidate.src = resolvedImage;
     return () => { candidate.onload = null; candidate.onerror = null; };
-  }, [hero.image]);
+  }, [hero.image, hero.imageFallback]);
 
   useEffect(() => {
     const loadNews = async () => {
