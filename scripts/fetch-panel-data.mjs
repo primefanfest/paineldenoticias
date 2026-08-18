@@ -32,7 +32,7 @@ try {
 
 const ligas = [["bra.1", "BRASILEIRÃO SÉRIE A", 0], ["bra.copa_do_brazil", "COPA DO BRASIL", 1], ["conmebol.sudamericana", "SUL-AMERICANA", 2], ["conmebol.libertadores", "LIBERTADORES", 3], ["bra.2", "BRASILEIRÃO SÉRIE B", 99]];
 const rj = /flamengo|vasco|fluminense|botafogo|volta redonda|america-rj|madureira|bangu|portuguesa-rj/i;
-const escudos = { palmeiras: "palmeiras", flamengo: "flamengo", corinthians: "corinthians", "sao paulo": "sao-paulo", botafogo: "botafogo", fluminense: "fluminense", gremio: "gremio", vasco: "vasco", "vasco da gama": "vasco", "atletico mineiro": "atletico-mineiro", bahia: "bahia", internacional: "internacional", santos: "santos" };
+const escudos = { palmeiras: "palmeiras", flamengo: "flamengo", corinthians: "corinthians", "sao paulo": "sao-paulo", botafogo: "botafogo", fluminense: "fluminense", gremio: "gremio", vasco: "vasco", "vasco da gama": "vasco", "atletico mineiro": "atletico-mineiro", bahia: "bahia", internacional: "internacional", santos: "santos", "athletico paranaense": "athletico-paranaense", "athletico-pr": "athletico-paranaense", chapecoense: "chapecoense", coritiba: "coritiba", cruzeiro: "cruzeiro", mirassol: "mirassol", "mirassol-sp": "mirassol", "red bull bragantino": "red-bull-bragantino", bragantino: "red-bull-bragantino", remo: "remo", vitoria: "vitoria", "vitoria-ba": "vitoria" };
 const normalizar = (nome) => nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const logo = (nome) => escudos[normalizar(nome)] ? `/paineldenoticias/crests/escudosweb/${escudos[normalizar(nome)]}.png` : "";
 const chave = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
