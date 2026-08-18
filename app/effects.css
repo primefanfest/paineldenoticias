@@ -1,0 +1,8 @@
+.hero-image { transition: background 1s ease, filter 1s ease; }
+.hero-image.city { background: linear-gradient(90deg, transparent 35%, #03040733), linear-gradient(0deg, #040507 2%, transparent 70%), radial-gradient(circle at 72% 22%, #ffdf9c 0 6%, transparent 7%), linear-gradient(145deg, #875553 0 26%, #b86b59 26% 35%, #293c59 35% 54%, #172334 54%); }
+.hero-image.market { background: linear-gradient(90deg, transparent 35%, #03040733), linear-gradient(0deg, #040507 2%, transparent 70%), linear-gradient(115deg, transparent 38%, #32d294 39% 41%, transparent 42% 52%, #e6495b 53% 55%, transparent 56%), linear-gradient(150deg, #142332, #0a1018); }
+.hero h1 { animation: headline-in .55s ease both; }
+.hero-dots { display: flex; gap: 7px; margin-top: 18px; }
+.hero-dots button { width: 22px; height: 4px; border: 0; border-radius: 3px; background: #ffffff48; cursor: pointer; padding: 0; transition: width .25s, background .25s; }
+.hero-dots button.active { width: 42px; background: var(--red); }
+@keyframes headline-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
