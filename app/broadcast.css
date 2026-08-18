@@ -46,9 +46,9 @@
 
 .broadcast-footer { min-height: 0; display: grid; grid-template-columns: clamp(150px, 14vw, 250px) minmax(0, 1fr) clamp(205px, 18vw, 335px); border-top: 2px solid #99101b; background: linear-gradient(90deg, #090d12, #04070a); }
 .breaking { position: relative; display: flex; flex-direction: column; justify-content: center; padding-left: 16px; background: linear-gradient(115deg, #b00917 0 78%, transparent 79%); font-size: clamp(16px, 1.5vw, 27px); line-height: .98; letter-spacing: -.5px; }.breaking::after { content: ""; position: absolute; right: 5%; top: 0; width: 17%; height: 100%; transform: skew(-25deg); border-left: 5px solid #d60d20; border-right: 5px solid #d60d20; }.breaking span,.breaking strong { font-weight: 900; }
-.broadcast-ticker { min-width: 0; display: flex; align-items: center; overflow: hidden; padding: 0 2vw; }.broadcast-ticker p { width: max-content; min-width: max-content; margin: 0; padding-left: 100%; color: #d8dce1; font-size: clamp(12px, 1.1vw, 20px); white-space: nowrap; animation: broadcast-ticker 34s linear infinite; }
+.broadcast-ticker { min-width: 0; display: flex; align-items: center; overflow: hidden; padding: 0 2.6vw; }.broadcast-ticker p { min-width: 0; width: 100%; margin: 0; overflow: hidden; color: #d8dce1; font-size: clamp(11px, 1vw, 18px); white-space: nowrap; text-overflow: ellipsis; animation: broadcast-headline 6.5s ease both; }
 .broadcast-clock { position: relative; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; padding-right: 18px; border-left: 2px solid #c81020; }.broadcast-clock strong { font-size: clamp(28px, 3vw, 54px); line-height: .9; font-variant-numeric: tabular-nums; }.broadcast-clock span { margin-top: 7px; color: #c7ccd2; font-size: clamp(9px, .75vw, 14px); text-transform: capitalize; }
-@keyframes broadcast-ticker { to { transform: translateX(-100%); } }
+@keyframes broadcast-headline { 0% { opacity: 0; transform: translateX(22px); } 8%, 88% { opacity: 1; transform: translateX(0); } 100% { opacity: 0; transform: translateX(-12px); } }
 
 @media (orientation: landscape) and (max-height: 760px) {
   .broadcast-shell { grid-template-rows: 66px minmax(0, 1fr) 68px; padding-top: 8px; padding-bottom: 7px; }
