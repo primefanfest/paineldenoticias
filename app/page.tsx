@@ -58,7 +58,7 @@ function relativeTime(publishedAt?: string) {
 function NewsList({ items }: { items: NewsStory[] }) {
   return <div className="broadcast-list">{items.map((item) => (
     <article className="broadcast-card" key={item.title}>
-      <div className={`broadcast-thumb ${item.image ?? "news-live"}`} style={item.image?.startsWith("http") ? { backgroundImage: `url(${item.image})` } : undefined} />
+      <div className={`broadcast-thumb ${item.image || "news-live"}`} style={item.image ? { backgroundImage: `url(${item.image.startsWith("http") || item.image.startsWith(BASE_PATH) ? item.image : asset(item.image)})` } : undefined} />
       <div><h3>{item.title}</h3><p><span className="clock-icon">◷</span> {item.age ?? relativeTime(item.publishedAt)} <b>• {item.source ?? "NewsWall"}</b></p></div>
     </article>
   ))}</div>;
@@ -131,11 +131,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!hero.image?.startsWith("http")) { setHeroImage(asset("/rio-hero.webp")); setHeroImageIsFallback(true); return; }
+    if (!hero.image) { setHeroImage(asset("/rio-hero.webp")); setHeroImageIsFallback(true); return; }
+    const resolvedImage = hero.image.startsWith("http") || hero.image.startsWith(BASE_PATH) ? hero.image : asset(hero.image);
     const candidate = new Image();
-    candidate.onload = () => { setHeroImage(hero.image!); setHeroImageIsFallback(false); };
+    candidate.onload = () => { setHeroImage(resolvedImage); setHeroImageIsFallback(false); };
     candidate.onerror = () => { setHeroImage(asset("/rio-hero.webp")); setHeroImageIsFallback(true); };
-    candidate.src = hero.image;
+    candidate.src = resolvedImage;
     return () => { candidate.onload = null; candidate.onerror = null; };
   }, [hero.image]);
 
