@@ -104,6 +104,7 @@ export default function Home() {
   const [now, setNow] = useState<Date | null>(null);
   const [online, setOnline] = useState(true);
   const [sidebarMode, setSidebarMode] = useState<"news" | "football">("news");
+  const [tickerIndex, setTickerIndex] = useState(0);
   const [weather, setWeather] = useState<WeatherDay[]>(fallbackWeather);
   const [dollar, setDollar] = useState<DollarQuote>({ value: 5.20, variation: -0.42, updated: "ÚLTIMO BOLETIM" });
   const [hero, setHero] = useState<NewsStory>({ title: "Rio se transforma com novos espaços de lazer e convivência", description: "Projetos valorizam a paisagem, aproximam moradores da cidade e renovam áreas públicas.", age: "há 25 min", source: "NewsWall Pro" });
@@ -193,6 +194,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const timer = window.setInterval(() => setTickerIndex((index) => index + 1), 6500);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     const loadWeather = async () => {
       try {
         const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=-22.9068&longitude=-43.1729&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=America%2FSao_Paulo&forecast_days=3");
@@ -226,6 +232,8 @@ export default function Home() {
 
   const time = now?.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) ?? "--:--";
   const date = now?.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }) ?? "";
+  const tickerItems = [hero.title, ...rioNews.map((story) => story.title), ...worldNews.map((story) => story.title)].filter(Boolean);
+  const tickerHeadline = tickerItems[tickerIndex % tickerItems.length] ?? newsUpdated;
 
   return (
     <main className="broadcast-shell">
@@ -277,7 +285,7 @@ export default function Home() {
 
       <footer className="broadcast-footer">
         <div className="breaking"><span>BREAKING</span><strong>NEWS</strong></div>
-        <div className="broadcast-ticker"><p>{newsUpdated} • {hero.title} • {rioNews.map((story) => story.title).join(" • ")}</p></div>
+        <div className="broadcast-ticker"><p key={`${tickerIndex}-${tickerHeadline}`}>{tickerHeadline}</p></div>
         <div className="broadcast-clock"><strong>{time}</strong><span>{date}</span></div>
       </footer>
     </main>
