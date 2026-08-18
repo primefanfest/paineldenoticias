@@ -29,12 +29,14 @@ jobs:
           node-version: 22
       - name: Preparar imagens licenciadas e identidade visual
         run: |
-          mkdir -p public/crests/escudosweb
+          mkdir -p public/crests/escudosweb public/crests/wikimedia
           base64 -d assets-encoded/rio-hero.webp.b64 > public/rio-hero.webp
           base64 -d assets-encoded/favicon.svg.b64 > public/favicon.svg
           for time in corinthians gremio atletico-mineiro botafogo fluminense palmeiras flamengo sao-paulo vasco internacional santos bahia athletico-paranaense chapecoense coritiba cruzeiro mirassol red-bull-bragantino remo vitoria; do
             base64 -d "assets-encoded/$time.png.b64" > "public/crests/escudosweb/$time.png"
           done
+          base64 -d assets-encoded/olimpia.png.b64 > public/crests/wikimedia/olimpia.png
+          base64 -d assets-encoded/independiente-rivadavia.svg.b64 > public/crests/wikimedia/independiente-rivadavia.svg
       - run: npm install
       - run: npm run build:pages
         env:
