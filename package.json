@@ -1,11 +1,21 @@
 {
-  "name": "newswall-escudos-automation",
+  "name": "painel-de-noticias",
   "private": true,
   "type": "module",
   "scripts": {
-    "sync": "node scripts/sincronizar-escudos.mjs"
+    "sync": "node scripts/sincronizar-escudos.mjs",
+    "build:pages": "node scripts/fetch-panel-data.mjs && next build --webpack"
   },
   "dependencies": {
-    "playwright": "1.55.0"
+    "next": "16.2.6",
+    "playwright": "1.55.0",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.19",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
   }
 }
