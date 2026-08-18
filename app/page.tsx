@@ -96,7 +96,7 @@ function FootballPanel({ matches, live }: { matches: FootballMatch[]; live: bool
         </div>
       </article>
     ))}</div>
-    <div className="football-note">Horários de Brasília • Agenda ESPN • Escudos HD EscudosWeb</div>
+    <div className="football-note">Horários de Brasília • Agenda ESPN • Escudos HD verificados</div>
   </section>;
 }
 
