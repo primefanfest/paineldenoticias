@@ -23,25 +23,44 @@ const context = await browser.newContext({ acceptDownloads: true, locale: "pt-BR
 const page = await context.newPage();
 
 async function preencherPrimeiro(seletores, valor) {
-  for (const seletor of seletores) {
-    const campo = page.locator(seletor).first();
-    if (await campo.count()) { await campo.fill(valor); return true; }
+  for (const frame of page.frames()) {
+    for (const seletor of seletores) {
+      const campo = frame.locator(seletor).first();
+      if (await campo.count() && await campo.isVisible()) {
+        await campo.fill(valor);
+        return frame;
+      }
+    }
   }
-  return false;
+  return null;
 }
 
 try {
   await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
-  const abrirAcesso = page.getByText(/logar\s*\/\s*registrar/i).first();
+  const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar/i }).first();
   if (!await abrirAcesso.count()) throw new Error("O botão de acesso do EscudosWeb não foi encontrado.");
   await abrirAcesso.click();
-  await page.locator('input[type="email"], input[name="email"], input[type="password"]').first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(2000);
+  for (const frame of page.frames()) {
+    const usarEmail = frame.getByText(/(?:entrar|continuar|login).*e-?mail|e-?mail.*(?:entrar|continuar|login)/i).first();
+    if (await usarEmail.count() && await usarEmail.isVisible()) {
+      await usarEmail.click();
+      await page.waitForTimeout(1000);
+      break;
+    }
+  }
   const usuarioOk = await preencherPrimeiro([
-    'input[type="email"]', 'input[name="email"]', 'input[name="usuario"]', 'input[name="username"]'
+    'input[type="email"]', 'input[name="email"]', 'input[name="usuario"]',
+    'input[name="username"]', 'input[autocomplete="username"]'
   ], usuario);
-  const senhaOk = await preencherPrimeiro(['input[type="password"]', 'input[name="password"]', 'input[name="senha"]'], senha);
+  const senhaOk = await preencherPrimeiro([
+    'input[type="password"]', 'input[name="password"]', 'input[name="senha"]',
+    'input[autocomplete="current-password"]'
+  ], senha);
   if (!usuarioOk || !senhaOk) throw new Error("O formulário de acesso do EscudosWeb mudou.");
-  await page.locator('button[type="submit"], input[type="submit"]').first().click();
+  const enviar = senhaOk.locator('button[type="submit"], input[type="submit"]').first();
+  if (await enviar.count()) await enviar.click();
+  else await senhaOk.getByRole("button", { name: /entrar|login/i }).first().click();
   await page.waitForTimeout(2500);
   if (await page.locator('input[type="password"]').count()) {
     throw new Error("O EscudosWeb não aceitou o acesso automático. Verifique os Secrets ou uma eventual validação adicional.");
