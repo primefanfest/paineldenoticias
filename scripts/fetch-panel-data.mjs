@@ -23,30 +23,42 @@ function lerFeed(xml, source) {
 }
 
 const imagemInvalida = (url = "") => !url || /logo|favicon|avatar|agenciabrasil\.svg|\/ebc\.png(?:\?|$)/i.test(url);
-function metaImagem(html = "") {
-  return limpar(html).match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i)?.[1]
-    ?? limpar(html).match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i)?.[1]
-    ?? "";
+function imagensDaPagina(html = "") {
+  const pagina = limpar(html);
+  return [...new Set([
+    ...[...pagina.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/gi)].map((r) => r[1]),
+    ...[...pagina.matchAll(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/gi)].map((r) => r[1]),
+    ...[...pagina.matchAll(/<img[^>]+(?:class=["'][^"']*(?:wp-post-image|attachment-post)[^"']*["'][^>]+)?src=["']([^"']+)["']/gi)].map((r) => r[1]),
+  ].filter((url) => !imagemInvalida(url)))];
+}
+const escaparXml = (v = "") => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c]);
+async function criarArteReserva(noticia) {
+  const nome = `${createHash("sha1").update(`reserva:${noticia.link}`).digest("hex").slice(0, 16)}.svg`;
+  const titulo = escaparXml(noticia.title.split(" ").slice(0, 7).join(" "));
+  const fonte = escaparXml(noticia.source.toUpperCase());
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#101b29"/><stop offset="1" stop-color="#03070c"/></linearGradient><pattern id="p" width="42" height="42" patternUnits="userSpaceOnUse"><path d="M0 42 42 0" stroke="#1f3348" stroke-width="2" opacity=".35"/></pattern></defs><rect width="1200" height="675" fill="url(#g)"/><rect width="1200" height="675" fill="url(#p)"/><rect x="70" y="72" width="10" height="110" rx="5" fill="#ff1836"/><text x="112" y="110" fill="#ff1836" font-family="Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="4">${fonte}</text><text x="112" y="166" fill="#fff" font-family="Arial,sans-serif" font-size="42" font-weight="700">${titulo}</text><circle cx="1060" cy="520" r="72" fill="none" stroke="#ff1836" stroke-width="12" opacity=".8"/><circle cx="1060" cy="520" r="34" fill="#ff1836" opacity=".25"/><text x="70" y="590" fill="#8fa0b3" font-family="Arial,sans-serif" font-size="24">IMAGEM NÃO FORNECIDA PELA FONTE</text></svg>`;
+  await writeFile(new URL(nome, destinoImagens), svg);
+  return { ...noticia, image: `/paineldenoticias/data/images/${nome}`, imageFallback: true };
 }
 async function baixarImagem(noticia) {
-  let candidata = "";
+  let candidatas = [];
   try {
     const pagina = await fetch(noticia.link, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)" } });
-    if (pagina.ok) candidata = metaImagem(await pagina.text());
+    if (pagina.ok) candidatas = imagensDaPagina(await pagina.text());
   } catch { /* Tenta a imagem indicada diretamente no feed. */ }
-  if (imagemInvalida(candidata)) candidata = noticia.image;
-  if (imagemInvalida(candidata)) return { ...noticia, image: "" };
-  try {
-    const resposta = await fetch(candidata, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)", Referer: noticia.link } });
-    const tipo = resposta.headers.get("content-type")?.split(";")[0] ?? "";
-    if (!resposta.ok || !tipo.startsWith("image/")) return { ...noticia, image: "" };
-    const bytes = new Uint8Array(await resposta.arrayBuffer());
-    if (bytes.byteLength < 5000) return { ...noticia, image: "" };
-    const extensao = tipo.includes("png") ? "png" : tipo.includes("webp") ? "webp" : "jpg";
-    const nome = `${createHash("sha1").update(noticia.link).digest("hex").slice(0, 16)}.${extensao}`;
-    await writeFile(new URL(nome, destinoImagens), bytes);
-    return { ...noticia, image: `/paineldenoticias/data/images/${nome}` };
-  } catch { return { ...noticia, image: "" }; }
+  if (!imagemInvalida(noticia.image)) candidatas.push(noticia.image);
+  for (const candidata of [...new Set(candidatas)]) try {
+      const resposta = await fetch(candidata, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)", Referer: noticia.link } });
+      const tipo = resposta.headers.get("content-type")?.split(";")[0] ?? "";
+      if (!resposta.ok || !tipo.startsWith("image/")) continue;
+      const bytes = new Uint8Array(await resposta.arrayBuffer());
+      if (bytes.byteLength < 5000) continue;
+      const extensao = tipo.includes("png") ? "png" : tipo.includes("webp") ? "webp" : "jpg";
+      const nome = `${createHash("sha1").update(noticia.link).digest("hex").slice(0, 16)}.${extensao}`;
+      await writeFile(new URL(nome, destinoImagens), bytes);
+      return { ...noticia, image: `/paineldenoticias/data/images/${nome}`, imageFallback: false };
+    } catch { /* Tenta a próxima imagem encontrada. */ }
+  return criarArteReserva(noticia);
 }
 
 try {
