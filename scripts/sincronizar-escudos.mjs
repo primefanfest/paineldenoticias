@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const usuario = process.env.ESCUDOSWEB_USUARIO;
@@ -31,15 +31,21 @@ async function preencherPrimeiro(seletores, valor) {
 }
 
 try {
-  await page.goto("https://www.escudosweb.com/login", { waitUntil: "domcontentloaded" });
+  await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
+  const abrirAcesso = page.getByText(/logar\s*\/\s*registrar/i).first();
+  if (!await abrirAcesso.count()) throw new Error("O botão de acesso do EscudosWeb não foi encontrado.");
+  await abrirAcesso.click();
+  await page.locator('input[type="email"], input[name="email"], input[type="password"]').first().waitFor({ timeout: 15000 });
   const usuarioOk = await preencherPrimeiro([
     'input[type="email"]', 'input[name="email"]', 'input[name="usuario"]', 'input[name="username"]'
   ], usuario);
   const senhaOk = await preencherPrimeiro(['input[type="password"]', 'input[name="password"]', 'input[name="senha"]'], senha);
   if (!usuarioOk || !senhaOk) throw new Error("O formulário de acesso do EscudosWeb mudou.");
   await page.locator('button[type="submit"], input[type="submit"]').first().click();
-  await page.waitForLoadState("domcontentloaded");
-  if (/\/login(?:[/?#]|$)/i.test(page.url())) throw new Error("O EscudosWeb não aceitou o acesso automático. Verifique os Secrets ou uma eventual validação adicional.");
+  await page.waitForTimeout(2500);
+  if (await page.locator('input[type="password"]').count()) {
+    throw new Error("O EscudosWeb não aceitou o acesso automático. Verifique os Secrets ou uma eventual validação adicional.");
+  }
 
   for (const url of linhas) {
     await page.goto(url, { waitUntil: "domcontentloaded" });
