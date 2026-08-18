@@ -125,9 +125,9 @@ try {
 
 const ligas = [["bra.1", "BRASILEIRÃO SÉRIE A", 0], ["bra.copa_do_brazil", "COPA DO BRASIL", 1], ["conmebol.sudamericana", "SUL-AMERICANA", 2], ["conmebol.libertadores", "LIBERTADORES", 3], ["bra.2", "BRASILEIRÃO SÉRIE B", 99]];
 const rj = /flamengo|vasco|fluminense|botafogo(?![- ]?sp)|volta redonda|america-rj|madureira|bangu|portuguesa-rj/i;
-const escudos = { palmeiras: "palmeiras", flamengo: "flamengo", corinthians: "corinthians", "sao paulo": "sao-paulo", botafogo: "botafogo", fluminense: "fluminense", gremio: "gremio", vasco: "vasco", "vasco da gama": "vasco", "atletico mineiro": "atletico-mineiro", bahia: "bahia", internacional: "internacional", santos: "santos", "athletico paranaense": "athletico-paranaense", "athletico-pr": "athletico-paranaense", chapecoense: "chapecoense", coritiba: "coritiba", cruzeiro: "cruzeiro", mirassol: "mirassol", "mirassol-sp": "mirassol", "red bull bragantino": "red-bull-bragantino", bragantino: "red-bull-bragantino", remo: "remo", vitoria: "vitoria", "vitoria-ba": "vitoria" };
+const escudos = { palmeiras: "escudosweb/palmeiras.png", flamengo: "escudosweb/flamengo.png", corinthians: "escudosweb/corinthians.png", "sao paulo": "escudosweb/sao-paulo.png", botafogo: "escudosweb/botafogo.png", fluminense: "escudosweb/fluminense.png", gremio: "escudosweb/gremio.png", vasco: "escudosweb/vasco.png", "vasco da gama": "escudosweb/vasco.png", "atletico mineiro": "escudosweb/atletico-mineiro.png", bahia: "escudosweb/bahia.png", internacional: "escudosweb/internacional.png", santos: "escudosweb/santos.png", "athletico paranaense": "escudosweb/athletico-paranaense.png", "athletico-pr": "escudosweb/athletico-paranaense.png", chapecoense: "escudosweb/chapecoense.png", coritiba: "escudosweb/coritiba.png", cruzeiro: "escudosweb/cruzeiro.png", mirassol: "escudosweb/mirassol.png", "mirassol-sp": "escudosweb/mirassol.png", "red bull bragantino": "escudosweb/red-bull-bragantino.png", bragantino: "escudosweb/red-bull-bragantino.png", remo: "escudosweb/remo.png", vitoria: "escudosweb/vitoria.png", "vitoria-ba": "escudosweb/vitoria.png", olimpia: "wikimedia/olimpia.png", "club olimpia": "wikimedia/olimpia.png", "independiente rivadavia": "wikimedia/independiente-rivadavia.svg" };
 const normalizar = (nome) => nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-const logo = (nome) => escudos[normalizar(nome)] ? `/paineldenoticias/crests/escudosweb/${escudos[normalizar(nome)]}.png` : "";
+const logo = (nome) => escudos[normalizar(nome)] ? `/paineldenoticias/crests/${escudos[normalizar(nome)]}` : "";
 const chave = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 try {
   const inicio = new Date(); inicio.setDate(inicio.getDate() - 1); const fim = new Date(); fim.setDate(fim.getDate() + 21); const periodo = `${chave(inicio)}-${chave(fim)}`;
@@ -150,5 +150,5 @@ try {
     .filter((j) => !idsEscolhidos.has(j.id))
     .sort((a, b) => a.rjPriority - b.rjPriority || Number(a.competitionPriority === 99) - Number(b.competitionPriority === 99) || Date.parse(a.dateTime) - Date.parse(b.dateTime) || a.competitionPriority - b.competitionPriority);
   const matches = [...destaquesPorCampeonato, ...complementares].slice(0, 4);
-  await writeFile(new URL("football.json", destino), JSON.stringify({ matches, updatedAt: new Date().toISOString(), source: "ESPN", crestSource: "EscudosWeb" }));
+  await writeFile(new URL("football.json", destino), JSON.stringify({ matches, updatedAt: new Date().toISOString(), source: "ESPN", crestSource: "EscudosWeb; Wikimedia Commons como reserva" }));
 } catch (erro) { console.warn(`Agenda indisponível: ${erro}`); await writeFile(new URL("football.json", destino), "{}"); }
