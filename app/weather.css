@@ -1,0 +1,16 @@
+.broadcast-header { padding-top: 4px; }
+.weather-block { min-width: 0; display: flex; align-items: center; gap: clamp(14px, 1.6vw, 28px); }
+.weather-location { flex: 0 0 auto; padding-right: clamp(12px, 1.5vw, 25px); border-right: 1px solid #303944; }
+.weather-location > span { color: var(--broadcast-red); font-size: 12px; margin-right: 7px; }
+.weather-location strong { font-size: clamp(12px, 1vw, 18px); letter-spacing: .4px; }
+.weather-location small { display: block; margin: 5px 0 0 20px; color: #7f8994; font-size: clamp(7px, .55vw, 10px); letter-spacing: 1.2px; }
+.weather-days { min-width: 0; display: flex; align-items: stretch; gap: clamp(9px, 1.4vw, 24px); }
+.weather-day { min-width: 0; display: grid; grid-template-columns: auto auto auto; align-items: center; gap: clamp(6px, .65vw, 11px); }
+.weather-day + .weather-day { padding-left: clamp(9px, 1.3vw, 22px); border-left: 1px solid #252e37; }
+.weather-icon { font-size: clamp(23px, 2.3vw, 42px); line-height: 1; filter: drop-shadow(0 3px 7px #0008); }
+.weather-day div > small { display: block; color: #909aa5; font-size: clamp(7px, .55vw, 10px); font-weight: 900; letter-spacing: 1px; }
+.weather-day div > strong { display: block; margin-top: 1px; font-size: clamp(20px, 2vw, 37px); line-height: .95; font-variant-numeric: tabular-nums; }
+.weather-day p { max-width: 110px; overflow: hidden; margin: 3px 0 0; color: #aeb6bf; font-size: clamp(7px, .6vw, 11px); white-space: nowrap; text-overflow: ellipsis; }
+.weather-day > b { color: #c9ced4; font-size: clamp(9px, .7vw, 13px); font-weight: 700; }.weather-day > b i { display: block; margin-top: 3px; color: #727d88; font-style: normal; }
+@media (orientation: landscape) and (max-width: 1500px) { .weather-location { display: none; }.weather-days { gap: 13px; }.weather-day + .weather-day { padding-left: 12px; }.weather-day p { max-width: 92px; } }
+@media (orientation: landscape) and (max-height: 760px) { .weather-icon { font-size: 25px; }.weather-day div > strong { font-size: 22px; }.weather-day p { margin-top: 1px; }.weather-location small { margin-top: 2px; } }
