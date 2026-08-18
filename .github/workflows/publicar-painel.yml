@@ -30,12 +30,10 @@ jobs:
       - name: Preparar imagens licenciadas e identidade visual
         run: |
           mkdir -p public/crests/escudosweb
-          base="https://newswall-pro-marcio.metachieve.chatgpt.site"
-          curl -fsSL "$base/rio-hero.webp" -o public/rio-hero.webp
-          curl -fsSL "$base/og.png" -o public/og.png
-          curl -fsSL "$base/favicon.svg" -o public/favicon.svg
+          base64 -d assets-encoded/rio-hero.webp.b64 > public/rio-hero.webp
+          base64 -d assets-encoded/favicon.svg.b64 > public/favicon.svg
           for time in corinthians gremio atletico-mineiro botafogo fluminense palmeiras flamengo sao-paulo vasco internacional santos bahia; do
-            curl -fsSL "$base/crests/escudosweb/$time.png" -o "public/crests/escudosweb/$time.png"
+            base64 -d "assets-encoded/$time.png.b64" > "public/crests/escudosweb/$time.png"
           done
       - run: npm install
       - run: npm run build:pages
