@@ -28,7 +28,8 @@ function imagensDaPagina(html = "") {
   return [...new Set([
     ...[...pagina.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/gi)].map((r) => r[1]),
     ...[...pagina.matchAll(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/gi)].map((r) => r[1]),
-    ...[...pagina.matchAll(/<img[^>]+(?:class=["'][^"']*(?:wp-post-image|attachment-post)[^"']*["'][^>]+)?src=["']([^"']+)["']/gi)].map((r) => r[1]),
+    ...[...pagina.matchAll(/<img[^>]+class=["'][^"']*(?:wp-post-image|attachment-post)[^"']*["'][^>]+src=["']([^"']+)["']/gi)].map((r) => r[1]),
+    ...[...pagina.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]+class=["'][^"']*(?:wp-post-image|attachment-post)[^"']*["']/gi)].map((r) => r[1]),
   ].filter((url) => !imagemInvalida(url)))];
 }
 const escaparXml = (v = "") => v.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c]);
