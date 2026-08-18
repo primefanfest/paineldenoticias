@@ -1,7 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 
 const destino = new URL("../public/data/", import.meta.url);
+const destinoImagens = new URL("images/", destino);
 await mkdir(destino, { recursive: true });
+await mkdir(destinoImagens, { recursive: true });
 const limpar = (v = "") => v.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&amp;/g, "&");
 const texto = (v = "") => limpar(v).replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 const tag = (item, nome) => item.match(new RegExp(`<${nome}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${nome}>`, "i"))?.[1] ?? "";
@@ -18,6 +21,33 @@ function lerFeed(xml, source) {
   }).filter((n) => n.title && n.link && !Number.isNaN(Date.parse(n.publishedAt)));
 }
 
+const imagemInvalida = (url = "") => !url || /logo|favicon|avatar|agenciabrasil\.svg|\/ebc\.png(?:\?|$)/i.test(url);
+function metaImagem(html = "") {
+  return limpar(html).match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i)?.[1]
+    ?? limpar(html).match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i)?.[1]
+    ?? "";
+}
+async function baixarImagem(noticia) {
+  let candidata = "";
+  try {
+    const pagina = await fetch(noticia.link, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)" } });
+    if (pagina.ok) candidata = metaImagem(await pagina.text());
+  } catch { /* Tenta a imagem indicada diretamente no feed. */ }
+  if (imagemInvalida(candidata)) candidata = noticia.image;
+  if (imagemInvalida(candidata)) return { ...noticia, image: "" };
+  try {
+    const resposta = await fetch(candidata, { headers: { "User-Agent": "Mozilla/5.0 (NewsWall-Pro)", Referer: noticia.link } });
+    const tipo = resposta.headers.get("content-type")?.split(";")[0] ?? "";
+    if (!resposta.ok || !tipo.startsWith("image/")) return { ...noticia, image: "" };
+    const bytes = new Uint8Array(await resposta.arrayBuffer());
+    if (bytes.byteLength < 5000) return { ...noticia, image: "" };
+    const extensao = tipo.includes("png") ? "png" : tipo.includes("webp") ? "webp" : "jpg";
+    const nome = `${createHash("sha1").update(noticia.link).digest("hex").slice(0, 16)}.${extensao}`;
+    await writeFile(new URL(nome, destinoImagens), bytes);
+    return { ...noticia, image: `/paineldenoticias/data/images/${nome}` };
+  } catch { return { ...noticia, image: "" }; }
+}
+
 try {
   const respostas = await Promise.all(feeds.map(([url]) => fetch(url, { headers: { "User-Agent": "NewsWall-Pro/1.0" } })));
   const xmls = await Promise.all(respostas.map((r) => r.ok ? r.text() : ""));
@@ -27,7 +57,9 @@ try {
   const geral = todas.filter((n) => !rio.includes(n) && !mundo.includes(n));
   const hero = rio[0] ?? geral[0] ?? todas[0];
   if (!hero) throw new Error("feeds vazios");
-  await writeFile(new URL("news.json", destino), JSON.stringify({ updatedAt: new Date().toISOString(), hero, rio: [...rio.slice(1), ...geral].slice(0, 3), world: [...mundo, ...geral].slice(0, 3) }));
+  const selecionadas = [hero, ...[...rio.slice(1), ...geral].slice(0, 3), ...[...mundo, ...geral].slice(0, 3)];
+  const [heroPronto, ...laterais] = await Promise.all(selecionadas.map(baixarImagem));
+  await writeFile(new URL("news.json", destino), JSON.stringify({ updatedAt: new Date().toISOString(), hero: heroPronto, rio: laterais.slice(0, 3), world: laterais.slice(3, 6) }));
 } catch (erro) { console.warn(`Notícias indisponíveis: ${erro}`); await writeFile(new URL("news.json", destino), "{}"); }
 
 const ligas = [["bra.1", "BRASILEIRÃO SÉRIE A", 0], ["bra.copa_do_brazil", "COPA DO BRASIL", 1], ["conmebol.sudamericana", "SUL-AMERICANA", 2], ["conmebol.libertadores", "LIBERTADORES", 3], ["bra.2", "BRASILEIRÃO SÉRIE B", 99]];
