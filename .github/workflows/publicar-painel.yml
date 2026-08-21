@@ -37,6 +37,10 @@ jobs:
           done
           base64 -d assets-encoded/olimpia.png.b64 > public/crests/wikimedia/olimpia.png
           base64 -d assets-encoded/independiente-rivadavia.svg.b64 > public/crests/wikimedia/independiente-rivadavia.svg
+          base64 -d assets-encoded/river-plate.svg.b64 > public/crests/wikimedia/river-plate.svg
+          base64 -d assets-encoded/independiente-santa-fe.svg.b64 > public/crests/wikimedia/independiente-santa-fe.svg
+          base64 -d assets-encoded/independiente-del-valle.png.b64 > public/crests/wikimedia/independiente-del-valle.png
+          base64 -d assets-encoded/deportes-tolima.svg.b64 > public/crests/wikimedia/deportes-tolima.svg
       - run: npm install
       - run: npm run build:pages
         env:
