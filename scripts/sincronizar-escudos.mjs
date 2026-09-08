@@ -35,33 +35,69 @@ async function preencherPrimeiro(seletores, valor) {
   return null;
 }
 
+async function clicarPrimeiro(nomes) {
+  for (const frame of page.frames()) {
+    for (const nome of nomes) {
+      const botao = frame.getByRole("button", { name: nome }).first();
+      if (await botao.count() && await botao.isVisible()) {
+        await botao.click();
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+async function esperarCampo(seletores, valor, timeout = 15000) {
+  const limite = Date.now() + timeout;
+  while (Date.now() < limite) {
+    const frame = await preencherPrimeiro(seletores, valor);
+    if (frame) return frame;
+    await page.waitForTimeout(500);
+  }
+  return null;
+}
+
+async function salvarDiagnostico() {
+  await mkdir(path.join(raiz, "diagnostico"), { recursive: true });
+  await page.screenshot({ path: path.join(raiz, "diagnostico", "escudosweb.png"), fullPage: true });
+  await writeFile(path.join(raiz, "diagnostico", "escudosweb.html"), await page.content());
+}
+
 try {
   await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
-  const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar/i }).first();
-  if (!await abrirAcesso.count()) throw new Error("O botão de acesso do EscudosWeb não foi encontrado.");
+  const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar|entrar|acessar/i }).first();
+  await abrirAcesso.waitFor({ state: "visible", timeout: 15000 });
   await abrirAcesso.click();
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1500);
   for (const frame of page.frames()) {
-    const usarEmail = frame.getByText(/(?:entrar|continuar|login).*e-?mail|e-?mail.*(?:entrar|continuar|login)/i).first();
+    const usarEmail = frame.getByText(/(?:entrar|continuar|login|acessar).*e-?mail|e-?mail.*(?:entrar|continuar|login|acessar)/i).first();
     if (await usarEmail.count() && await usarEmail.isVisible()) {
       await usarEmail.click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(750);
       break;
     }
   }
-  const usuarioOk = await preencherPrimeiro([
+  const usuarioOk = await esperarCampo([
     'input[type="email"]', 'input[name="email"]', 'input[name="usuario"]',
-    'input[name="username"]', 'input[autocomplete="username"]'
+    'input[name="username"]', 'input[autocomplete="username"]',
+    'input[autocomplete="email"]', 'input[aria-label*="mail" i]', 'input[placeholder*="mail" i]'
   ], usuario);
-  const senhaOk = await preencherPrimeiro([
+  if (!usuarioOk) throw new Error("O campo de e-mail do EscudosWeb não foi encontrado.");
+  const seletoresSenha = [
     'input[type="password"]', 'input[name="password"]', 'input[name="senha"]',
-    'input[autocomplete="current-password"]'
-  ], senha);
-  if (!usuarioOk || !senhaOk) throw new Error("O formulário de acesso do EscudosWeb mudou.");
-  const enviar = senhaOk.locator('button[type="submit"], input[type="submit"]').first();
-  if (await enviar.count()) await enviar.click();
-  else await senhaOk.getByRole("button", { name: /entrar|login/i }).first().click();
-  await page.waitForTimeout(2500);
+    'input[autocomplete="current-password"]', 'input[aria-label*="senha" i]', 'input[placeholder*="senha" i]'
+  ];
+  let senhaOk = await preencherPrimeiro(seletoresSenha, senha);
+  if (!senhaOk) {
+    const avancou = await clicarPrimeiro([/continuar/i, /próximo/i, /avançar/i, /entrar/i]);
+    if (!avancou) await page.keyboard.press("Enter");
+    senhaOk = await esperarCampo(seletoresSenha, senha);
+  }
+  if (!senhaOk) throw new Error("O campo de senha do EscudosWeb não foi encontrado.");
+  const enviou = await clicarPrimeiro([/entrar/i, /login/i, /acessar/i]);
+  if (!enviou) await page.keyboard.press("Enter");
+  await page.waitForTimeout(3500);
   if (await page.locator('input[type="password"]').count()) {
     throw new Error("O EscudosWeb não aceitou o acesso automático. Verifique os Secrets ou uma eventual validação adicional.");
   }
@@ -74,6 +110,9 @@ try {
     const nome = download.suggestedFilename() || `${new URL(url).pathname.split("/").filter(Boolean).pop()}.zip`;
     await download.saveAs(path.join(downloads, nome));
   }
+} catch (erro) {
+  await salvarDiagnostico();
+  throw erro;
 } finally {
   await browser.close();
 }
