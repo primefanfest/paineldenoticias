@@ -6,7 +6,10 @@ import path from "node:path";
 
 const usuario = process.env.ESCUDOSWEB_USUARIO;
 const senha = process.env.ESCUDOSWEB_SENHA;
-if (!usuario || !senha) throw new Error("Cadastre ESCUDOSWEB_USUARIO e ESCUDOSWEB_SENHA nos Secrets do GitHub.");
+const sessaoBase64 = process.env.ESCUDOSWEB_SESSAO_BASE64;
+if (!sessaoBase64 && (!usuario || !senha)) {
+  throw new Error("Cadastre ESCUDOSWEB_SESSAO_BASE64 ou as credenciais nos Secrets do GitHub.");
+}
 
 const raiz = process.cwd();
 const downloads = path.join(raiz, "downloads");
@@ -19,7 +22,10 @@ await mkdir(downloads, { recursive: true });
 await mkdir(destino, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ acceptDownloads: true, locale: "pt-BR" });
+const storageState = sessaoBase64
+  ? JSON.parse(Buffer.from(sessaoBase64, "base64").toString("utf8"))
+  : undefined;
+const context = await browser.newContext({ acceptDownloads: true, locale: "pt-BR", storageState });
 let page = await context.newPage();
 
 async function preencherPrimeiro(seletores, valor) {
@@ -66,6 +72,9 @@ async function salvarDiagnostico() {
 
 try {
   await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
+  if (sessaoBase64) {
+    await page.waitForTimeout(3000);
+  } else {
   const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar|entrar|acessar/i }).first();
   await abrirAcesso.waitFor({ state: "visible", timeout: 15000 });
   await page.waitForTimeout(5000);
@@ -107,6 +116,7 @@ try {
   await page.waitForTimeout(3500);
   if (await page.locator('input[type="password"]').count()) {
     throw new Error("O EscudosWeb não aceitou o acesso automático. Verifique os Secrets ou uma eventual validação adicional.");
+  }
   }
 
   for (const url of linhas) {
