@@ -25,6 +25,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Baixar e catalogar pacotes
         env:
+          ESCUDOSWEB_SESSAO_BASE64: ${{ secrets.ESCUDOSWEB_SESSAO_BASE64 }}
           ESCUDOSWEB_USUARIO: ${{ secrets.ESCUDOSWEB_USUARIO }}
           ESCUDOSWEB_SENHA: ${{ secrets.ESCUDOSWEB_SENHA }}
         run: npm run sync
