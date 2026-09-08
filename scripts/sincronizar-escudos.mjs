@@ -68,6 +68,7 @@ try {
   await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
   const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar|entrar|acessar/i }).first();
   await abrirAcesso.waitFor({ state: "visible", timeout: 15000 });
+  await page.waitForTimeout(5000);
   const paginasAntes = new Set(context.pages());
   await abrirAcesso.click();
   await page.waitForTimeout(1500);
