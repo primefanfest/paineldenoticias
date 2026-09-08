@@ -41,6 +41,7 @@ jobs:
           base64 -d assets-encoded/independiente-santa-fe.svg.b64 > public/crests/wikimedia/independiente-santa-fe.svg
           base64 -d assets-encoded/independiente-del-valle.png.b64 > public/crests/wikimedia/independiente-del-valle.png
           base64 -d assets-encoded/deportes-tolima.svg.b64 > public/crests/wikimedia/deportes-tolima.svg
+          base64 -d assets-encoded/platense.svg.b64 > public/crests/wikimedia/platense.svg
       - run: npm install
       - run: npm run build:pages
         env:
