@@ -70,7 +70,7 @@ try {
   await abrirAcesso.waitFor({ state: "visible", timeout: 15000 });
   await page.waitForTimeout(5000);
   const paginasAntes = new Set(context.pages());
-  await abrirAcesso.click();
+  await abrirAcesso.click({ force: true });
   await page.waitForTimeout(1500);
   const novaPagina = context.pages().find((pagina) => !paginasAntes.has(pagina));
   if (novaPagina) {
