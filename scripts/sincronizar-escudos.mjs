@@ -20,7 +20,7 @@ await mkdir(destino, { recursive: true });
 
 const browser = await chromium.launch({ headless: true });
 const context = await browser.newContext({ acceptDownloads: true, locale: "pt-BR" });
-const page = await context.newPage();
+let page = await context.newPage();
 
 async function preencherPrimeiro(seletores, valor) {
   for (const frame of page.frames()) {
@@ -68,8 +68,14 @@ try {
   await page.goto("https://www.escudosweb.com", { waitUntil: "domcontentloaded" });
   const abrirAcesso = page.getByRole("button", { name: /logar\s*\/\s*registrar|entrar|acessar/i }).first();
   await abrirAcesso.waitFor({ state: "visible", timeout: 15000 });
+  const paginasAntes = new Set(context.pages());
   await abrirAcesso.click();
   await page.waitForTimeout(1500);
+  const novaPagina = context.pages().find((pagina) => !paginasAntes.has(pagina));
+  if (novaPagina) {
+    page = novaPagina;
+    await page.waitForLoadState("domcontentloaded");
+  }
   for (const frame of page.frames()) {
     const usarEmail = frame.getByText(/(?:entrar|continuar|login|acessar).*e-?mail|e-?mail.*(?:entrar|continuar|login|acessar)/i).first();
     if (await usarEmail.count() && await usarEmail.isVisible()) {
