@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 const destino = new URL("../public/data/", import.meta.url);
@@ -125,8 +125,19 @@ try {
 
 const ligas = [["bra.1", "BRASILEIRÃO SÉRIE A", 0], ["bra.copa_do_brazil", "COPA DO BRASIL", 1], ["conmebol.sudamericana", "SUL-AMERICANA", 2], ["conmebol.libertadores", "LIBERTADORES", 3], ["bra.2", "BRASILEIRÃO SÉRIE B", 99]];
 const rj = /flamengo|vasco|fluminense|botafogo(?![- ]?sp)|volta redonda|america-rj|madureira|bangu|portuguesa-rj/i;
-const escudos = { palmeiras: "escudosweb/palmeiras.png", flamengo: "escudosweb/flamengo.png", corinthians: "escudosweb/corinthians.png", "sao paulo": "escudosweb/sao-paulo.png", botafogo: "escudosweb/botafogo.png", fluminense: "escudosweb/fluminense.png", gremio: "escudosweb/gremio.png", vasco: "escudosweb/vasco.png", "vasco da gama": "escudosweb/vasco.png", "atletico mineiro": "escudosweb/atletico-mineiro.png", "atletico-mg": "escudosweb/atletico-mineiro.png", "atletico mg": "escudosweb/atletico-mineiro.png", bahia: "escudosweb/bahia.png", internacional: "escudosweb/internacional.png", santos: "escudosweb/santos.png", "athletico paranaense": "escudosweb/athletico-paranaense.png", "athletico-pr": "escudosweb/athletico-paranaense.png", chapecoense: "escudosweb/chapecoense.png", coritiba: "escudosweb/coritiba.png", cruzeiro: "escudosweb/cruzeiro.png", mirassol: "escudosweb/mirassol.png", "mirassol-sp": "escudosweb/mirassol.png", "red bull bragantino": "escudosweb/red-bull-bragantino.png", bragantino: "escudosweb/red-bull-bragantino.png", remo: "escudosweb/remo.png", vitoria: "escudosweb/vitoria.png", "vitoria-ba": "escudosweb/vitoria.png", olimpia: "wikimedia/olimpia.png", "club olimpia": "wikimedia/olimpia.png", "independiente rivadavia": "wikimedia/independiente-rivadavia.svg", "river plate": "wikimedia/river-plate.svg", "independiente santa fe": "wikimedia/independiente-santa-fe.svg", "santa fe": "wikimedia/independiente-santa-fe.svg", "independiente del valle": "wikimedia/independiente-del-valle.png", "deportes tolima": "wikimedia/deportes-tolima.svg", platense: "wikimedia/platense.svg", "club atletico platense": "wikimedia/platense.svg" };
 const normalizar = (nome) => nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+const escudos = { olimpia: "wikimedia/olimpia.png", "club olimpia": "wikimedia/olimpia.png", "independiente rivadavia": "wikimedia/independiente-rivadavia.svg", "river plate": "wikimedia/river-plate.svg", "independiente santa fe": "wikimedia/independiente-santa-fe.svg", "santa fe": "wikimedia/independiente-santa-fe.svg", "independiente del valle": "wikimedia/independiente-del-valle.png", "deportes tolima": "wikimedia/deportes-tolima.svg", platense: "wikimedia/platense.svg", "club atletico platense": "wikimedia/platense.svg" };
+const arquivosEscudosWeb = await readdir(new URL("../assets-encoded/", import.meta.url));
+for (const arquivo of arquivosEscudosWeb.filter((nome) => nome.endsWith(".png.b64"))) {
+  const nome = arquivo.replace(/\.png\.b64$/, "");
+  escudos[normalizar(nome.replace(/-/g, " "))] = `escudosweb/${nome}.png`;
+}
+Object.assign(escudos, {
+  "vasco": "escudosweb/vasco-da-gama.png", "atletico-mg": "escudosweb/atletico-mineiro.png",
+  "atletico mg": "escudosweb/atletico-mineiro.png", "athletico-pr": "escudosweb/athletico-paranaense.png",
+  "mirassol": "escudosweb/mirassol-sp.png", "bragantino": "escudosweb/red-bull-bragantino.png",
+  "vitoria-ba": "escudosweb/vitoria.png", "america-mg": "escudosweb/america-mineiro.png",
+});
 const logo = (nome) => escudos[normalizar(nome)] ? `/paineldenoticias/crests/${escudos[normalizar(nome)]}` : "";
 const chave = (d) => `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 try {
